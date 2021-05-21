@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -13,12 +14,19 @@ func main() {
 		"https://www.twitter.com",
 	}
 	//Declaring Channel
+	fmt.Println("Starting")
 	channel := make(chan string)
 	for _, link := range links {
 		go checkLink(link, channel)
 	}
-	for i := 0; i < len(links); i++ {
-		fmt.Println(<-channel)
+
+	for l := range channel {
+		//to add a pause
+		go func(link string) {
+			time.Sleep(5 * time.Second)
+			checkLink(link, channel)
+		}(l)
+
 	}
 
 }
@@ -26,11 +34,11 @@ func main() {
 func checkLink(link string, channel chan string) {
 	_, err := http.Get(link)
 	if err != nil {
-		//fmt.Println(link, "Might be down with ", err)
-		channel <- link + "Might be down with "
+		fmt.Println(link, "Might be down with ", err)
+		channel <- link
 		return
 	}
-	//fmt.Println(link, "is up!")
-	channel <- link + "is up!"
+	fmt.Println(link, "is up!")
+	channel <- link
 
 }
